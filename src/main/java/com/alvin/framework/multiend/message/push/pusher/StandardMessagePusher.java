@@ -1,19 +1,17 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.locker.MessagePushLocker;
+import com.alvin.framework.multiend.message.push.locker.PushLocker;
 import com.alvin.framework.multiend.message.push.manager.PushManager;
-import com.alvin.framework.multiend.message.push.manager.PushScope;
-import com.alvin.framework.multiend.message.push.manager.PushScopeEnum;
 import com.alvin.framework.multiend.message.push.message.Message;
 import com.alvin.framework.multiend.message.push.repository.MessageReceiptRepository;
 import com.alvin.framework.multiend.message.push.repository.MessageRepository;
-import com.alvin.framework.multiend.message.push.tunnel.MessagePushTunnel;
-import com.alvin.framework.multiend.message.push.tunnel.MessagePushTunnelFactory;
+import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
+import com.alvin.framework.multiend.message.push.tunnel.TunnelFactory;
+import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
 
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 /**
  * datetime 2019/4/10 16:38
@@ -40,7 +38,7 @@ public class StandardMessagePusher implements MessagePusher {
     /**
      * push lock
      */
-    private MessagePushLocker messagePushLocker;
+    private PushLocker pushLocker;
     /**
      * receipt repository
      */
@@ -48,147 +46,116 @@ public class StandardMessagePusher implements MessagePusher {
     /**
      * tunnel factory
      */
-    private MessagePushTunnelFactory messagePushTunnelFactory;
+    private TunnelFactory tunnelFactory;
 
     StandardMessagePusher(ExecutorService executorService,
                           PushManager pushManager,
                           MessageRepository messageRepository,
-                          MessagePushLocker messagePushLocker,
+                          PushLocker pushLocker,
                           MessageReceiptRepository messageReceiptRepository,
-                          MessagePushTunnelFactory messagePushTunnelFactory,
+                          TunnelFactory tunnelFactory,
                           long receiptTimeout) {
         this.executorService = executorService;
         this.pushManager = pushManager;
         this.messageRepository = messageRepository;
-        this.messagePushLocker = messagePushLocker;
+        this.pushLocker = pushLocker;
         this.messageReceiptRepository = messageReceiptRepository;
-        this.messagePushTunnelFactory = messagePushTunnelFactory;
+        this.tunnelFactory = tunnelFactory;
         this.receiptTimeout = receiptTimeout;
     }
 
     @Override
-    public void add(Message message, boolean head) {
-        add(message, head, true);
-    }
-
-    private void add( Message obj, boolean head, boolean startPush) {
-        messageRepository.add(obj, head);
-        if (startPush) {
-            String receiver = obj.getReceiver();
-            PushScope scope = obj.getPushOption().getPushScope();
-            switch (scope.getScope()) {
-                case firstConnectedTunnelInAllTunnels: triggerPush(receiver); break;
-                case firstConnectedTunnelInSpecificTunnels: triggerPush(receiver, scope.getTunnels()); break;
-                case specificTunnels: scope.getTunnels().forEach(tunnel -> triggerPush(receiver, tunnel)); break;
-                case allTunnels: messagePushTunnelFactory.listTunnelNames().forEach(tunnel -> triggerPush(receiver, tunnel)); break;
-            }
-            triggerPush(receiver);
-        }
+    public void addToTunnelQueue(Message message, Tunnel tunnel, boolean head) {
+        messageRepository.addToTunnelQueue(message, tunnel, head);
+        triggerPush(message.getReceiver(), tunnel);
     }
 
     @Override
-    public void reportReceipt(String receiver, String messageId, String tunnel) {
+    public void addToTunnelGroupQueue(Message message, IntegratedTunnel integratedTunnel, boolean head) {
+        messageRepository.addToIntegratedTunnelQueue(message, integratedTunnel, head);
+        triggerPush(message.getReceiver(), integratedTunnel);
+    }
+
+    @Override
+    public void reportReceipt(String receiver, Tunnel tunnel, String messageId) {
         messageReceiptRepository.storeReceipt(receiver, messageId, tunnel);
         pushManager.onSuccess(receiver, messageId, tunnel);
     }
 
     @Override
-    public void onConnect(String receiver, String tunnel) {
-        triggerPush(receiver);
-        triggerPush(receiver, tunnel);
-        List<Message> messages = messageRepository.findAllByReceiverAndScopeAndTunnelsContain(receiver, PushScopeEnum.firstConnectedTunnelInSpecificTunnels, tunnel);
-        messages.forEach(message -> triggerPush(receiver, message.getPushOption().getPushScope().getTunnels()));
-    }
-
-    @Override
     public void onInit() {
-        List<String> receivers = pushManager.listReceivers();
-        List<MessagePushTunnel> tunnels = messagePushTunnelFactory.listTunnels();
+        Set<String> receivers = pushManager.listReceiversOfMessagesInQueue();
+        List<Tunnel> tunnels = tunnelFactory.listTunnels();
         receivers.forEach(receiver -> tunnels.forEach(tunnel -> {
             if (tunnel.connected(receiver)) {
-                onConnect(receiver, tunnel.name());
+                onConnect(receiver, tunnel);
             }
         }));
     }
 
-    private void triggerPush(String receiver) {
-        executorService.execute(() -> pushContinuously(receiver));
+    @Override
+    public void onConnect(String receiver, Tunnel tunnel) {
+        triggerPush(receiver, tunnel);
+        List<IntegratedTunnel> integratedTunnels = tunnelFactory.findAllIntegratedTunnelsContainTunnel(receiver, tunnel);
+        integratedTunnels.forEach(integratedTunnel -> triggerPush(receiver, integratedTunnel));
     }
 
-    private void triggerPush(String receiver, String tunnel) {
+    private void triggerPush(String receiver, Tunnel tunnel) {
         executorService.execute(() -> pushContinuously(receiver, tunnel));
     }
 
-    private void triggerPush(String receiver, List<String> tunnels) {
-        executorService.execute(() -> pushContinuously(receiver, tunnels));
+    private void triggerPush(String receiver, IntegratedTunnel tunnelGroup) {
+        executorService.execute(() -> pushContinuously(receiver, tunnelGroup));
     }
 
-    private void pushContinuously(String receiver) {
-        String lockKey = "message_pusher:first_connected_in_all:" + receiver;
-        if (messagePushLocker.tryLock(lockKey)) {
-            List<MessagePushTunnel> tunnels = messagePushTunnelFactory.listTunnels();
+    private void pushContinuously(String receiver, IntegratedTunnel tunnelGroup) {
+        String lockKey = "message_pusher:integrated_tunnel_" + tunnelGroup.hashCode() + ":" + receiver;
+        if (pushLocker.tryLock(lockKey)) {
             while (true) {
-                Message t = messageRepository.popByReceiverAndScope(receiver, PushScopeEnum.firstConnectedTunnelInAllTunnels);
+                Message t = messageRepository.popFromTunnelGroupQueue(receiver, tunnelGroup);
                 if (t == null) {
                     break;
                 }
-                if (!pushAndBreak(receiver, t, tunnels)) {
+                if (!pushAndBreak(receiver, t, tunnelGroup)) {
                     break;
                 }
             }
-            messagePushLocker.unlock(lockKey);
+            pushLocker.unlock(lockKey);
         }
     }
 
-    private void pushContinuously(String receiver, List<String> tunnels) {
-        String lockKey = "message_pusher:first_connected_in_specific:" + receiver + "_" + String.join(",", tunnels);
-        if (messagePushLocker.tryLock(lockKey)) {
-            List<MessagePushTunnel> messagePushTunnels = tunnels.stream().map(messagePushTunnelFactory::ofName).filter(Objects::nonNull).collect(Collectors.toList());
+    private void pushContinuously(String receiver, Tunnel tunnel) {
+        String lockKey = "message_pusher:tunnel_" + tunnel.hashCode() + ":" + receiver;
+        if (pushLocker.tryLock(lockKey)) {
             while (true) {
-                Message t = messageRepository.popByReceiverAndTunnelsAndScope(receiver, tunnels, PushScopeEnum.firstConnectedTunnelInSpecificTunnels);
+                Message t = messageRepository.popFromTunnelQueue(receiver, tunnel);
                 if (t == null) {
                     break;
                 }
-                if (!pushAndBreak(receiver, t, messagePushTunnels)) {
-                    break;
-                }
-            }
-            messagePushLocker.unlock(lockKey);
-        }
-    }
-
-    private void pushContinuously(String receiver, String tunnel) {
-        String lockKey = "message_pusher:multi_end:" + receiver + "_" + tunnel;
-        if (messagePushLocker.tryLock(lockKey)) {
-            while (true) {
-                Message t = messageRepository.popByReceiverAndScopeInAndTunnelsContainAndTunnelNotPushed(receiver, PushScopeEnum.multiEndScopes(), tunnel);
-                if (t == null) {
-                    break;
-                }
-                MessagePushTunnel pushTunnel = messagePushTunnelFactory.ofName(tunnel);
-                if (pushTunnel == null || !pushTunnel.connected(receiver)) {
+                if (!tunnel.connected(receiver)) {
                     break;
                 } else {
                     if (t.getPushOption().isOrdered()) {
-                        doPush(receiver, t, pushTunnel);
+                        doPush(receiver, t, tunnel, null);
                     } else {
-                        executorService.execute(() -> doPush(receiver, t, pushTunnel));
+                        executorService.execute(() -> doPush(receiver, t, tunnel, null));
                     }
                 }
             }
-            messagePushLocker.unlock(lockKey);
+            pushLocker.unlock(lockKey);
         }
     }
 
-    private boolean pushAndBreak(String receiver, Message t, List<MessagePushTunnel> tunnels) {
+    private boolean pushAndBreak(String receiver, Message t, IntegratedTunnel integratedTunnel) {
         boolean connected = false;
-        for (MessagePushTunnel tunnel : tunnels) {
+        List<Tunnel> tunnels = integratedTunnel.getTunnels();
+        for (Tunnel tunnel : tunnels) {
             if (tunnel.connected(receiver)) {
                 connected = true;
                 if (t.getPushOption().isOrdered()) {
-                    doPush(receiver, t, tunnel);
+                    doPush(receiver, t, tunnel, integratedTunnel);
                 } else {
-                    executorService.execute(() -> doPush(receiver, t, tunnel));
+                    executorService.execute(() -> doPush(receiver, t, tunnel, integratedTunnel));
                 }
                 break;
             }
@@ -196,18 +163,18 @@ public class StandardMessagePusher implements MessagePusher {
         return connected;
     }
 
-    private void doPush(String receiver, Message t, MessagePushTunnel tunnel) {
-        boolean closedLoop = t.getPushOption().isClosedLoop();
+    private void doPush(String receiver, Message t, Tunnel tunnel, IntegratedTunnel integratedTunnel) {
+        boolean solid = t.getPushOption().issolid();
         String msgId = t.getMessageId();
         String msg = t.getData();
         tunnel.push(receiver, msg);
-        if (!closedLoop) {
+        if (!solid) {
             return;
         }
         long start = System.currentTimeMillis();
         long now = start;
         while (now - start < receiptTimeout) {
-            if (messageReceiptRepository.consumeReceipt(receiver, msgId, tunnel.name())) {
+            if (messageReceiptRepository.consumeReceipt(receiver, msgId, tunnel)) {
                 return;
             }
             try {
@@ -217,6 +184,10 @@ public class StandardMessagePusher implements MessagePusher {
             }
             now = System.currentTimeMillis();
         }
-        add(t, true, false);
+        if (integratedTunnel != null) {
+            addToTunnelGroupQueue(t, integratedTunnel, true);
+        } else {
+            addToTunnelQueue(t, tunnel, true);
+        }
     }
 }

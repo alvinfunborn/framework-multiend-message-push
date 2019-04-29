@@ -6,40 +6,33 @@ package com.alvin.framework.multiend.message.push.manager;
  * @author sin5
  */
 public class PushOption {
-
-    /**
-     * if true, push to all valid tunnels, else only push to first connected tunnel
-     */
-    private PushScope pushScope;
     /**
      * if true, push repeatedly until receipt gathered, else push ignore receipt
      */
-    private boolean closedLoop;
+    private boolean solid;
     /**
-     * if true, push orderly in pushScope when closedLoop=true
+     * if true, push orderly in pushScope when solid=true
      */
     private boolean ordered;
 
-    public PushOption(PushScope pushScope, boolean closedLoop) {
-        this.pushScope = pushScope;
-        this.closedLoop = closedLoop;
+    public static PushOption ordered() {
+        return new PushOption(true, true);
     }
 
-    public PushOption(PushScope pushScope, boolean closedLoop, boolean ordered) {
-        if (ordered && !closedLoop) {
-            throw new IllegalArgumentException("closedLoop must be true when ordered set true");
+    public static PushOption ofSolid(boolean solid) {
+        return new PushOption(solid, false);
+    }
+
+    private PushOption(boolean solid, boolean ordered) {
+        if (ordered && !solid) {
+            throw new IllegalArgumentException("solid must be true when ordered set true");
         }
-        this.pushScope = pushScope;
-        this.closedLoop = closedLoop;
+        this.solid = solid;
         this.ordered = ordered;
     }
 
-    public PushScope getPushScope() {
-        return pushScope;
-    }
-
-    public boolean isClosedLoop() {
-        return closedLoop;
+    public boolean issolid() {
+        return solid;
     }
 
     public boolean isOrdered() {

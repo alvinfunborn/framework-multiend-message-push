@@ -1,6 +1,8 @@
 package com.alvin.framework.multiend.message.push.manager;
 
-import java.util.List;
+import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
+
+import java.util.Set;
 
 /**
  * datetime 2019/4/28 16:59
@@ -14,7 +16,7 @@ public interface PushManager {
      *
      * @return list of receivers
      */
-    List<String> listReceivers();
+    Set<String> listReceiversOfMessagesInQueue();
 
     /**
      * on success of receiving msg from tunnel
@@ -23,5 +25,5 @@ public interface PushManager {
      * @param messageId id
      * @param tunnel receive msg from which tunnel
      */
-    void onSuccess(String receiver, String messageId, String tunnel);
+    void onSuccess(String receiver, String messageId, Tunnel tunnel);
 }

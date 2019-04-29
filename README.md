@@ -14,7 +14,7 @@
 public class MessagePushConfig {
     
     @Autowired
-    private MessagePushLocker messagePushLocker;
+    private MessagePushLocker pushLocker;
     @Autowired
     private MessageReceiptRepository messageReceiptRepository;
     @Autowired
@@ -26,7 +26,7 @@ public class MessagePushConfig {
     public MessagePusher messagePusher() {
         return new StandardMessagePusherBuilder<String>()
                 .withExecutorService(Executors.newCachedThreadPool())
-                .withMessagePushLocker(messagePushLocker)
+                .withMessagePushLocker(pushLocker)
                 .withMessageReceiptRepository(messageReceiptRepository)
                 .withMessageRepository(messageRepository)
                 .withPushManager(pushManager)

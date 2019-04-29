@@ -1,10 +1,8 @@
 package com.alvin.framework.multiend.message.push.repository;
 
-import com.alvin.framework.multiend.message.push.manager.PushScopeEnum;
 import com.alvin.framework.multiend.message.push.message.Message;
-
-import java.util.List;
-import java.util.Set;
+import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
+import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
 
 /**
  * datetime 2019/4/28 16:58
@@ -14,49 +12,38 @@ import java.util.Set;
 public interface MessageRepository {
 
     /**
-     * push to queue
+     * push to queue. message will be pushed by this specific tunnel
      *
-     * @param obj msg obj
+     * @param message message
+     * @param tunnel tunnel that will push this msg
      * @param head if add to head
      */
-    void add(Message obj, boolean head);
+    void addToTunnelQueue(Message message, Tunnel tunnel, boolean head);
 
     /**
-     * pop from queue. non block
+     * push to queue. message will be pushed by first connected tunnel in specific tunnels
      *
-     * @param receiver receiver
-     * @param scopeEnums scopes
-     * @param tunnel tunnel which has not received receipt
-     * @return obj
+     * @param message message
+     * @param integratedTunnel tunnels
+     * @param head if add to head
      */
-    Message popByReceiverAndScopeInAndTunnelsContainAndTunnelNotPushed(String receiver, Set<PushScopeEnum> scopeEnums, String tunnel);
+    void addToIntegratedTunnelQueue(Message message, IntegratedTunnel integratedTunnel, boolean head);
 
     /**
-     * pop from queue. non block
+     * pop from tunnel queue, non block
      *
      * @param receiver receiver
-     * @param tunnels tunnels
-     * @param scopeEnum scope
-     * @return obj
-     */
-    Message popByReceiverAndTunnelsAndScope(String receiver, List<String> tunnels, PushScopeEnum scopeEnum);
-
-    /**
-     * pop from queue. non block
-     *
-     * @param receiver receiver
-     * @param scopeEnum scope
-     * @return obj
-     */
-    Message popByReceiverAndScope(String receiver, PushScopeEnum scopeEnum);
-
-    /**
-     * get all from queue.
-     *
-     * @param receiver receiver
-     * @param scopeEnum scope
      * @param tunnel tunnel
-     * @return obj list
+     * @return message
      */
-    List<Message> findAllByReceiverAndScopeAndTunnelsContain(String receiver, PushScopeEnum scopeEnum, String tunnel);
+    Message popFromTunnelQueue(String receiver, Tunnel tunnel);
+
+    /**
+     * pop from tunnels queue, non block
+     *
+     * @param receiver receiver
+     * @param integratedTunnel tunnels
+     * @return message
+     */
+    Message popFromTunnelGroupQueue(String receiver, IntegratedTunnel integratedTunnel);
 }

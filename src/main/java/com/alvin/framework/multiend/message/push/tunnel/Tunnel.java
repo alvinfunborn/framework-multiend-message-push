@@ -6,7 +6,7 @@ package com.alvin.framework.multiend.message.push.tunnel;
  *
  * @author sin5
  */
-public interface MessagePushTunnel {
+public interface Tunnel{
 
     /**
      * if receiver connected to this tunnel
@@ -23,11 +23,4 @@ public interface MessagePushTunnel {
      * @param msg msg
      */
     void push(String receiver, String msg);
-
-    /**
-     * name of tunnel
-     *
-     * @return name
-     */
-    String name();
 }

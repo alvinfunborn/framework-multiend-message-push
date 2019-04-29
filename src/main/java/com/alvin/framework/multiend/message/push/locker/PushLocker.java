@@ -5,7 +5,7 @@ package com.alvin.framework.multiend.message.push.locker;
  *
  * @author sin5
  */
-public interface MessagePushLocker {
+public interface PushLocker {
 
     /**
      * lock push process

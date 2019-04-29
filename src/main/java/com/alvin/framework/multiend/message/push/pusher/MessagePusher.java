@@ -1,6 +1,8 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
 import com.alvin.framework.multiend.message.push.message.Message;
+import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
+import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
 
 /**
  * datetime 2019/4/10 16:29
@@ -20,15 +22,25 @@ public interface MessagePusher {
      * @param receiver receiver
      * @param tunnel tunnel
      */
-    void onConnect(String receiver, String tunnel);
+    void onConnect(String receiver, Tunnel tunnel);
 
     /**
-     * add to queue
+     * push to queue. message will be pushed by this specific tunnel
      *
-     * @param message message obj
+     * @param message message
+     * @param tunnel tunnel that will push this msg
      * @param head if add to head
      */
-    void add(Message message, boolean head);
+    void addToTunnelQueue(Message message, Tunnel tunnel, boolean head);
+
+    /**
+     * push to queue. message will be pushed by first connected tunnel in tunnels
+     *
+     * @param message message
+     * @param integratedTunnel tunnels
+     * @param head if add to head
+     */
+    void addToTunnelGroupQueue(Message message, IntegratedTunnel integratedTunnel, boolean head);
 
     /**
      * report receipt
@@ -37,5 +49,5 @@ public interface MessagePusher {
      * @param tunnel receive msg from which tunnel
      * @param messageId message id
      */
-    void reportReceipt(String receiver, String tunnel, String messageId);
+    void reportReceipt(String receiver, Tunnel tunnel, String messageId);
 }

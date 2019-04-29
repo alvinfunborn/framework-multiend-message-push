@@ -1,6 +1,6 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.tunnel.DefaultMessagePushTunnelFactory;
+import com.alvin.framework.multiend.message.push.tunnel.DefaultTunnelFactory;
 
 import java.util.concurrent.Executors;
 
@@ -16,27 +16,30 @@ public class StandardMessagePusherBuilder extends MessagePusherBuilder {
             this.executorService = Executors.newCachedThreadPool();
         }
         if (this.pushManager == null) {
-            throw new IllegalArgumentException("no bean of pushManager defined");
+            throw new IllegalArgumentException("pushManager must not be null");
         }
         if (this.messageRepository == null) {
             throw new IllegalArgumentException("messageRepository must not be null");
         }
-        if (this.messagePushLocker == null) {
-            throw new IllegalArgumentException("no bean of messagePushLock defined");
+        if (this.pushLocker == null) {
+            throw new IllegalArgumentException("messagePushLock must not be null");
         }
         if (this.messageReceiptRepository == null) {
-            throw new IllegalArgumentException("no bean of messageReceiptRepository defined");
+            throw new IllegalArgumentException("messageReceiptRepository must not be null");
         }
-        if (this.messagePushTunnelFactory == null) {
-            this.messagePushTunnelFactory = new DefaultMessagePushTunnelFactory();
+        if (this.tunnelFactory == null) {
+            if (this.receiverIntegratedTunnelRepository == null) {
+                throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
+            }
+            this.tunnelFactory = new DefaultTunnelFactory(receiverIntegratedTunnelRepository);
         }
         return new StandardMessagePusher(
                 this.executorService,
                 this.pushManager,
                 this.messageRepository,
-                this.messagePushLocker,
+                this.pushLocker,
                 this.messageReceiptRepository,
-                this.messagePushTunnelFactory,
+                this.tunnelFactory,
                 this.receiptTimeout);
     }
 

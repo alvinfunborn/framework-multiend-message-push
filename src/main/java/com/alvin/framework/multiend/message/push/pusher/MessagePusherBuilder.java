@@ -1,10 +1,11 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.locker.MessagePushLocker;
+import com.alvin.framework.multiend.message.push.locker.PushLocker;
 import com.alvin.framework.multiend.message.push.manager.PushManager;
 import com.alvin.framework.multiend.message.push.repository.MessageReceiptRepository;
 import com.alvin.framework.multiend.message.push.repository.MessageRepository;
-import com.alvin.framework.multiend.message.push.tunnel.MessagePushTunnelFactory;
+import com.alvin.framework.multiend.message.push.repository.ReceiverIntegratedTunnelRepository;
+import com.alvin.framework.multiend.message.push.tunnel.TunnelFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public abstract class MessagePusherBuilder {
     /**
      * push lock
      */
-    protected MessagePushLocker messagePushLocker;
+    protected PushLocker pushLocker;
     /**
      * receipt repository
      */
@@ -42,7 +43,11 @@ public abstract class MessagePusherBuilder {
     /**
      * tunnel factory
      */
-    protected MessagePushTunnelFactory messagePushTunnelFactory;
+    protected TunnelFactory tunnelFactory;
+    /**
+     * receiver tunnel repository
+     */
+    protected ReceiverIntegratedTunnelRepository receiverIntegratedTunnelRepository;
 
     public abstract MessagePusher build();
 
@@ -78,11 +83,11 @@ public abstract class MessagePusherBuilder {
         return this;
     }
 
-    public MessagePusherBuilder withMessagePushLocker(MessagePushLocker messagePushLocker) {
-        if (messagePushLocker == null) {
+    public MessagePusherBuilder withMessagePushLocker(PushLocker pushLocker) {
+        if (pushLocker == null) {
             throw new IllegalArgumentException("messagePushLocker must not be null");
         }
-        this.messagePushLocker = messagePushLocker;
+        this.pushLocker = pushLocker;
         return this;
     }
 
@@ -94,11 +99,19 @@ public abstract class MessagePusherBuilder {
         return this;
     }
 
-    public MessagePusherBuilder withMessagePushTunnelFactory(MessagePushTunnelFactory messagePushTunnelFactory) {
-        if (messagePushTunnelFactory == null) {
+    public MessagePusherBuilder withMessagePushTunnelFactory(TunnelFactory tunnelFactory) {
+        if (tunnelFactory == null) {
             throw new IllegalArgumentException("messagePushTunnelFactory must not be null");
         }
-        this.messagePushTunnelFactory = messagePushTunnelFactory;
+        this.tunnelFactory = tunnelFactory;
+        return this;
+    }
+
+    public MessagePusherBuilder withReceiverIntegratedTunnelRepository(ReceiverIntegratedTunnelRepository receiverIntegratedTunnelRepository) {
+        if (receiverIntegratedTunnelRepository == null) {
+            throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
+        }
+        this.receiverIntegratedTunnelRepository = receiverIntegratedTunnelRepository;
         return this;
     }
 }
