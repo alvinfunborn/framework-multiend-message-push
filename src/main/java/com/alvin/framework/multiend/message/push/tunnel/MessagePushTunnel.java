@@ -9,10 +9,25 @@ package com.alvin.framework.multiend.message.push.tunnel;
 public interface MessagePushTunnel {
 
     /**
+     * if receiver connected to this tunnel
+     *
+     * @param receiver receiver
+     * @return true if connected
+     */
+    boolean connected(String receiver);
+
+    /**
      * push msg
      *
      * @param receiver receiver
      * @param msg msg
      */
     void push(String receiver, String msg);
+
+    /**
+     * name of tunnel
+     *
+     * @return name
+     */
+    String name();
 }

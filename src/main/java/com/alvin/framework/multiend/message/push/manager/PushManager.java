@@ -1,7 +1,5 @@
 package com.alvin.framework.multiend.message.push.manager;
 
-import com.alvin.framework.multiend.message.push.tunnel.MessagePushTunnel;
-
 import java.util.List;
 
 /**
@@ -9,7 +7,7 @@ import java.util.List;
  *
  * @author sin5
  */
-public interface PushManager<T> {
+public interface PushManager {
 
     /**
      * get all receivers about to receiving messages
@@ -19,19 +17,11 @@ public interface PushManager<T> {
     List<String> listReceivers();
 
     /**
-     * determine which tunnel to use
-     *
-     * @param receiver receiver
-     * @param msg obj
-     * @return tunnel
-     */
-    MessagePushTunnel determineTunnel(String receiver, T msg);
-
-    /**
-     * on success of receiving msg
+     * on success of receiving msg from tunnel
      *
      * @param receiver receiver
      * @param messageId id
+     * @param tunnel receive msg from which tunnel
      */
-    void onSuccess(String receiver, String messageId);
+    void onSuccess(String receiver, String messageId, String tunnel);
 }

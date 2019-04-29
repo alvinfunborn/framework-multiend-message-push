@@ -8,17 +8,17 @@ package com.alvin.framework.multiend.message.push.locker;
 public interface MessagePushLocker {
 
     /**
-     * lock receiver process
+     * lock push process
      *
-     * @param receiver reciever
+     * @param lockKey lockKey
      * @return true if lock succedd
      */
-    boolean tryLock(String receiver);
+    boolean tryLock(String lockKey);
 
     /**
-     * unlock receiver process
+     * unlock push process
      *
-     * @param receiver receiver
+     * @param lockKey lockKey
      */
-    void unlock(String receiver);
+    void unlock(String lockKey);
 }
