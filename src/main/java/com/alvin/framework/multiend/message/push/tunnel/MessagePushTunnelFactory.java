@@ -17,6 +17,13 @@ public interface MessagePushTunnelFactory {
     List<MessagePushTunnel> listTunnels();
 
     /**
+     * list tunnel names
+     *
+     * @return tunnel name list
+     */
+    List<String> listTunnelNames();
+
+    /**
      * get tunnel by name
      *
      * @param name name

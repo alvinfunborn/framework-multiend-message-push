@@ -13,7 +13,7 @@ public interface MessageReceiptRepository {
      * @param receiver receiver
      * @param messageId msg id
      */
-    void storeReceipt(String receiver, String messageId);
+    void storeReceipt(String receiver, String messageId, String tunnel);
 
     /**
      * check if message received
@@ -22,5 +22,5 @@ public interface MessageReceiptRepository {
      * @param messageId msg id
      * @return true on message received
      */
-    boolean consumeReceipt(String receiver, String messageId);
+    boolean consumeReceipt(String receiver, String messageId, String tunnel);
 }

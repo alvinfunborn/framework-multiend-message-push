@@ -3,6 +3,7 @@ package com.alvin.framework.multiend.message.push.tunnel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Collectors;
 
 /**
  * datetime 2019/4/28 19:47
@@ -17,6 +18,11 @@ public class DefaultMessagePushTunnelFactory implements MessagePushTunnelFactory
         ServiceLoader<MessagePushTunnel> loader = ServiceLoader.load(MessagePushTunnel.class);
         loader.iterator().forEachRemaining(tunnelList::add);
         return tunnelList;
+    }
+
+    @Override
+    public List<String> listTunnelNames() {
+        return listTunnels().stream().map(MessagePushTunnel::name).collect(Collectors.toList());
     }
 
     @Override

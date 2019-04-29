@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author sin5
  */
-public abstract class MessagePusherBuilder<T> {
+public abstract class MessagePusherBuilder {
     /**
      * executor service
      */
@@ -30,7 +30,7 @@ public abstract class MessagePusherBuilder<T> {
     /**
      * message repository
      */
-    protected MessageRepository<T> messageRepository;
+    protected MessageRepository messageRepository;
     /**
      * push lock
      */
@@ -44,9 +44,9 @@ public abstract class MessagePusherBuilder<T> {
      */
     protected MessagePushTunnelFactory messagePushTunnelFactory;
 
-    public abstract MessagePusher<T> build();
+    public abstract MessagePusher build();
 
-    public MessagePusherBuilder<T> withExecutorService(ExecutorService executorService) {
+    public MessagePusherBuilder withExecutorService(ExecutorService executorService) {
         if (executorService == null) {
             throw new IllegalArgumentException("executorService must not be null");
         }
@@ -54,7 +54,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withReceiptTimeout(long duration, TimeUnit timeunit) {
+    public MessagePusherBuilder withReceiptTimeout(long duration, TimeUnit timeunit) {
         if (duration <= 0) {
             throw new IllegalArgumentException("duration must be larger than zero");
         }
@@ -62,7 +62,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withPushManager(PushManager pushManager) {
+    public MessagePusherBuilder withPushManager(PushManager pushManager) {
         if (pushManager == null) {
             throw new IllegalArgumentException("pushManager must not be null");
         }
@@ -70,7 +70,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withMessageRepository(MessageRepository<T> messageRepository) {
+    public MessagePusherBuilder withMessageRepository(MessageRepository messageRepository) {
         if (messageRepository == null) {
             throw new IllegalArgumentException("messageRepository must not be null");
         }
@@ -78,7 +78,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withMessagePushLocker(MessagePushLocker messagePushLocker) {
+    public MessagePusherBuilder withMessagePushLocker(MessagePushLocker messagePushLocker) {
         if (messagePushLocker == null) {
             throw new IllegalArgumentException("messagePushLocker must not be null");
         }
@@ -86,7 +86,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withMessageReceiptRepository(MessageReceiptRepository messageReceiptRepository) {
+    public MessagePusherBuilder withMessageReceiptRepository(MessageReceiptRepository messageReceiptRepository) {
         if (messageReceiptRepository == null) {
             throw new IllegalArgumentException("messageReceiptRepository must not be null");
         }
@@ -94,7 +94,7 @@ public abstract class MessagePusherBuilder<T> {
         return this;
     }
 
-    public MessagePusherBuilder<T> withMessagePushTunnelFactory(MessagePushTunnelFactory messagePushTunnelFactory) {
+    public MessagePusherBuilder withMessagePushTunnelFactory(MessagePushTunnelFactory messagePushTunnelFactory) {
         if (messagePushTunnelFactory == null) {
             throw new IllegalArgumentException("messagePushTunnelFactory must not be null");
         }

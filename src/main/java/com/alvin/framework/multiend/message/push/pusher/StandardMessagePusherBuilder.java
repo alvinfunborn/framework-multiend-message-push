@@ -9,9 +9,9 @@ import java.util.concurrent.Executors;
  *
  * @author sin5
  */
-public class StandardMessagePusherBuilder<T> extends MessagePusherBuilder<T> {
+public class StandardMessagePusherBuilder extends MessagePusherBuilder {
 
-    public StandardMessagePusher<T> build() {
+    public StandardMessagePusher build() {
         if (this.executorService == null) {
             this.executorService = Executors.newCachedThreadPool();
         }
@@ -30,7 +30,7 @@ public class StandardMessagePusherBuilder<T> extends MessagePusherBuilder<T> {
         if (this.messagePushTunnelFactory == null) {
             this.messagePushTunnelFactory = new DefaultMessagePushTunnelFactory();
         }
-        return new StandardMessagePusher<>(
+        return new StandardMessagePusher(
                 this.executorService,
                 this.pushManager,
                 this.messageRepository,

@@ -11,7 +11,7 @@ public interface MessagePushLocker {
      * lock push process
      *
      * @param lockKey lockKey
-     * @return true if lock succedd
+     * @return true if lock succeed
      */
     boolean tryLock(String lockKey);
 
