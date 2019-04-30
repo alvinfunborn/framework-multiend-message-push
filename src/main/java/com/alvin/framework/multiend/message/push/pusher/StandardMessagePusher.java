@@ -6,7 +6,7 @@ import com.alvin.framework.multiend.message.push.service.MessageReceiptRepositor
 import com.alvin.framework.multiend.message.push.service.MessageRepository;
 import com.alvin.framework.multiend.message.push.service.Tunnel;
 import com.alvin.framework.multiend.message.push.model.IntegratedTunnel;
-import com.alvin.framework.multiend.message.push.service.TunnelRepository;
+import com.alvin.framework.multiend.message.push.service.TunnelFactory;
 
 import java.util.List;
 import java.util.Set;
@@ -41,33 +41,31 @@ public class StandardMessagePusher implements MessagePusher {
     /**
      * tunnel factory
      */
-    private TunnelRepository tunnelRepository;
+    private TunnelFactory tunnelFactory;
 
     StandardMessagePusher(ExecutorService executorService,
                           MessageRepository messageRepository,
                           PushLocker pushLocker,
                           MessageReceiptRepository messageReceiptRepository,
-                          TunnelRepository tunnelRepository,
+                          TunnelFactory tunnelFactory,
                           long receiptTimeout) {
         this.executorService = executorService;
         this.messageRepository = messageRepository;
         this.pushLocker = pushLocker;
         this.messageReceiptRepository = messageReceiptRepository;
-        this.tunnelRepository = tunnelRepository;
+        this.tunnelFactory = tunnelFactory;
         this.receiptTimeout = receiptTimeout;
     }
 
     @Override
     public void addToTunnelQueue(Message message, Tunnel tunnel, boolean head) {
         messageRepository.addToTunnelQueue(message, tunnel, head);
-        tunnelRepository.register(tunnel);
         triggerPush(message.getReceiver(), tunnel);
     }
 
     @Override
-    public void addToTunnelGroupQueue(Message message, IntegratedTunnel integratedTunnel, boolean head) {
+    public void addToIntegratedTunnelQueue(Message message, IntegratedTunnel integratedTunnel, boolean head) {
         messageRepository.addToIntegratedTunnelQueue(message, integratedTunnel, head);
-        tunnelRepository.register(integratedTunnel);
         triggerPush(message.getReceiver(), integratedTunnel);
     }
 
@@ -79,7 +77,7 @@ public class StandardMessagePusher implements MessagePusher {
     @Override
     public void onInit() {
         Set<String> receivers = messageRepository.listReceiversOfMessagesInQueue();
-        List<Tunnel> tunnels = tunnelRepository.findAllTunnel();
+        List<Tunnel> tunnels = tunnelFactory.findAllTunnel();
         receivers.forEach(receiver -> tunnels.forEach(tunnel -> {
             if (tunnel.connected(receiver)) {
                 onConnect(receiver, tunnel);
@@ -90,7 +88,8 @@ public class StandardMessagePusher implements MessagePusher {
     @Override
     public void onConnect(String receiver, Tunnel tunnel) {
         triggerPush(receiver, tunnel);
-        List<IntegratedTunnel> integratedTunnels = tunnelRepository.findAllIntegratedTunnelContains(tunnel);
+        List<IntegratedTunnel> integratedTunnels = tunnelFactory.findAllIntegratedTunnel();
+        integratedTunnels.removeIf(integratedTunnel -> !integratedTunnel.contains(tunnel));
         integratedTunnels.forEach(integratedTunnel -> triggerPush(receiver, integratedTunnel));
     }
 
@@ -103,10 +102,10 @@ public class StandardMessagePusher implements MessagePusher {
     }
 
     private void pushContinuously(String receiver, IntegratedTunnel tunnelGroup) {
-        String lockKey = "message_pusher:integrated_tunnel_" + tunnelGroup.hashCode() + ":" + receiver;
+        String lockKey = "integrated_tunnel_" + tunnelGroup.hashCode() + ":" + receiver;
         if (pushLocker.tryLock(lockKey)) {
             while (true) {
-                Message t = messageRepository.popFromTunnelGroupQueue(receiver, tunnelGroup);
+                Message t = messageRepository.popFromIntegratedTunnelQueue(receiver, tunnelGroup);
                 if (t == null) {
                     break;
                 }
@@ -119,7 +118,7 @@ public class StandardMessagePusher implements MessagePusher {
     }
 
     private void pushContinuously(String receiver, Tunnel tunnel) {
-        String lockKey = "message_pusher:tunnel_" + tunnel.hashCode() + ":" + receiver;
+        String lockKey = "tunnel_" + tunnel.hashCode() + ":" + receiver;
         if (pushLocker.tryLock(lockKey)) {
             while (true) {
                 Message t = messageRepository.popFromTunnelQueue(receiver, tunnel);
@@ -189,7 +188,7 @@ public class StandardMessagePusher implements MessagePusher {
             now = System.currentTimeMillis();
         }
         if (integratedTunnel != null) {
-            addToTunnelGroupQueue(t, integratedTunnel, true);
+            addToIntegratedTunnelQueue(t, integratedTunnel, true);
         } else {
             addToTunnelQueue(t, tunnel, true);
         }

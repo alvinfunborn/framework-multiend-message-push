@@ -46,7 +46,7 @@ public interface MessageRepository {
      * @param integratedTunnel tunnels
      * @return message
      */
-    Message popFromTunnelGroupQueue(String receiver, IntegratedTunnel integratedTunnel);
+    Message popFromIntegratedTunnelQueue(String receiver, IntegratedTunnel integratedTunnel);
 
     /**
      * get all receivers about to receiving messages

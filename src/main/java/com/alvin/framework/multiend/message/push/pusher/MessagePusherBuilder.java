@@ -3,7 +3,7 @@ package com.alvin.framework.multiend.message.push.pusher;
 import com.alvin.framework.multiend.message.push.service.PushLocker;
 import com.alvin.framework.multiend.message.push.service.MessageReceiptRepository;
 import com.alvin.framework.multiend.message.push.service.MessageRepository;
-import com.alvin.framework.multiend.message.push.service.TunnelRepository;
+import com.alvin.framework.multiend.message.push.service.TunnelFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +37,7 @@ public abstract class MessagePusherBuilder {
     /**
      * receiver tunnel repository
      */
-    protected TunnelRepository tunnelRepository;
+    protected TunnelFactory tunnelFactory;
 
     public abstract MessagePusher build();
 
@@ -81,11 +81,11 @@ public abstract class MessagePusherBuilder {
         return this;
     }
 
-    public MessagePusherBuilder withTunnelRepository(TunnelRepository tunnelRepository) {
-        if (tunnelRepository == null) {
+    public MessagePusherBuilder withTunnelRepository(TunnelFactory tunnelFactory) {
+        if (tunnelFactory == null) {
             throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
         }
-        this.tunnelRepository = tunnelRepository;
+        this.tunnelFactory = tunnelFactory;
         return this;
     }
 }

@@ -10,19 +10,19 @@ public class PushOption {
     /**
      * try once, ignore tunnel connection and receipt.
      */
-    public static PushOption ONE_TIME_ATTEMPT = new PushOption(true, false, false);
+    public static final PushOption ONE_TIME_ATTEMPT = new PushOption(true, false, false);
     /**
      * push when tunnel connected, ignore receipt.
      */
-    public static PushOption UNRELIABLE_PUSH = new PushOption(false, false, false);
+    public static final PushOption UNRELIABLE_PUSH = new PushOption(false, false, false);
     /**
      * push when tunnel connected, make sure receipt reported.
      */
-    public static PushOption RELIABLE_PUSH = new PushOption(false, false, false);
+    public static final PushOption RELIABLE_PUSH = new PushOption(false, false, false);
     /**
      * push when tunnel connected, push next message after last receipt reported.
      */
-    public static PushOption ORDERED_PUSH = new PushOption(false, true, true);
+    public static final PushOption ORDERED_PUSH = new PushOption(false, true, true);
 
     /**
      * try one time
@@ -36,6 +36,9 @@ public class PushOption {
      * if true, push orderly in pushScope when reliable=true
      */
     private boolean ordered;
+
+    private PushOption() {
+    }
 
     private PushOption(boolean oneTimeAttempt, boolean reliable, boolean ordered) {
         this.oneTimeAttempt = oneTimeAttempt;

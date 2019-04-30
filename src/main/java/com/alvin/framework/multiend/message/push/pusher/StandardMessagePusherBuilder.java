@@ -22,7 +22,7 @@ public class StandardMessagePusherBuilder extends MessagePusherBuilder {
         if (this.messageReceiptRepository == null) {
             throw new IllegalArgumentException("messageReceiptRepository must not be null");
         }
-        if (this.tunnelRepository == null) {
+        if (this.tunnelFactory == null) {
             throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
         }
         return new StandardMessagePusher(
@@ -30,7 +30,7 @@ public class StandardMessagePusherBuilder extends MessagePusherBuilder {
                 this.messageRepository,
                 this.pushLocker,
                 this.messageReceiptRepository,
-                this.tunnelRepository,
+                this.tunnelFactory,
                 this.receiptTimeout);
     }
 

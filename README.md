@@ -21,7 +21,7 @@ public class MessagePushConfig {
     @Autowired
     private MessageRepository messageRepository;
     @Autowired
-    private TunnelRepository tunnelRepository;
+    private TunnelFactory tunnelFactory;
 
     @Bean
     public MessagePusher messagePusher() {
@@ -30,7 +30,7 @@ public class MessagePushConfig {
                 .withMessagePushLocker(pushLocker)
                 .withMessageReceiptRepository(messageReceiptRepository)
                 .withMessageRepository(messageRepository)
-                .withTunnelRepository(tunnelRepository)
+                .withTunnelRepository(tunnelFactory)
                 .withReceiptTimeout(10, TimeUnit.SECONDS).build();
     }
 }

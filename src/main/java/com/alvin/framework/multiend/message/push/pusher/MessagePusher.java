@@ -40,7 +40,7 @@ public interface MessagePusher {
      * @param integratedTunnel tunnels
      * @param head if add to head
      */
-    void addToTunnelGroupQueue(Message message, IntegratedTunnel integratedTunnel, boolean head);
+    void addToIntegratedTunnelQueue(Message message, IntegratedTunnel integratedTunnel, boolean head);
 
     /**
      * report receipt
