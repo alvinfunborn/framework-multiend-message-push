@@ -23,13 +23,4 @@ public interface MessageReceiptRepository {
      * @return true on message received
      */
     boolean consumeReceipt(String receiver, String messageId, Tunnel tunnel);
-
-    /**
-     * on success of receiving msg from tunnel
-     *
-     * @param receiver receiver
-     * @param messageId id
-     * @param tunnel receive msg from which tunnel
-     */
-    void onSuccess(String receiver, String messageId, Tunnel tunnel);
 }

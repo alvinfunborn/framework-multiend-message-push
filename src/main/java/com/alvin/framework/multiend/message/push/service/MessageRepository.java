@@ -54,4 +54,13 @@ public interface MessageRepository {
      * @return list of receivers
      */
     Set<String> listReceiversOfMessagesInQueue();
+
+    /**
+     * on success of pushing message through tunnel
+     *
+     * @param receiver receiver
+     * @param messageId id
+     * @param tunnel message pushed through tunnel
+     */
+    void onSuccess(String receiver, String messageId, Tunnel tunnel);
 }

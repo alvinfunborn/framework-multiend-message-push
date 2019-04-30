@@ -110,7 +110,7 @@ public class StandardMessagePusher implements MessagePusher {
                 if (t == null) {
                     break;
                 }
-                if (!pushAndBreak(receiver, t, tunnelGroup)) {
+                if (!doIntegratedPush(receiver, t, tunnelGroup)) {
                     break;
                 }
             }
@@ -126,21 +126,26 @@ public class StandardMessagePusher implements MessagePusher {
                 if (t == null) {
                     break;
                 }
-                if (!tunnel.connected(receiver)) {
-                    break;
-                } else {
+                boolean connected = tunnel.connected(receiver);
+                if (connected) {
                     if (t.getPushOption().isOrdered()) {
                         doPush(receiver, t, tunnel, null);
                     } else {
                         executorService.execute(() -> doPush(receiver, t, tunnel, null));
                     }
                 }
+                if (t.getPushOption().isOneTimeAttempt()) {
+                    connected = true;
+                }
+                if (!connected) {
+                    break;
+                }
             }
             pushLocker.unlock(lockKey);
         }
     }
 
-    private boolean pushAndBreak(String receiver, Message t, IntegratedTunnel integratedTunnel) {
+    private boolean doIntegratedPush(String receiver, Message t, IntegratedTunnel integratedTunnel) {
         boolean connected = false;
         List<Tunnel> tunnels = integratedTunnel.getTunnels();
         for (Tunnel tunnel : tunnels) {
@@ -154,23 +159,26 @@ public class StandardMessagePusher implements MessagePusher {
                 break;
             }
         }
+        if (t.getPushOption().isOneTimeAttempt()) {
+            connected = true;
+        }
         return connected;
     }
 
     private void doPush(String receiver, Message t, Tunnel tunnel, IntegratedTunnel integratedTunnel) {
-        boolean solid = t.getPushOption().issolid();
+        boolean reliable = t.getPushOption().isReliable();
         String msgId = t.getMessageId();
         String msg = t.getData();
         tunnel.push(receiver, msg);
-        if (!solid) {
-            messageReceiptRepository.onSuccess(receiver, msgId, tunnel);
+        if (!reliable) {
+            messageRepository.onSuccess(receiver, msgId, tunnel);
             return;
         }
         long start = System.currentTimeMillis();
         long now = start;
         while (now - start < receiptTimeout) {
             if (messageReceiptRepository.consumeReceipt(receiver, msgId, tunnel)) {
-                messageReceiptRepository.onSuccess(receiver, msgId, tunnel);
+                messageRepository.onSuccess(receiver, msgId, tunnel);
                 return;
             }
             try {
