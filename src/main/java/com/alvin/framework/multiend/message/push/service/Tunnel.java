@@ -1,4 +1,4 @@
-package com.alvin.framework.multiend.message.push.tunnel;
+package com.alvin.framework.multiend.message.push.service;
 
 /**
  * datetime 2019/4/4 20:14

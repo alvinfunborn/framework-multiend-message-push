@@ -1,4 +1,4 @@
-package com.alvin.framework.multiend.message.push.manager;
+package com.alvin.framework.multiend.message.push.model;
 
 import java.util.HashSet;
 import java.util.Set;

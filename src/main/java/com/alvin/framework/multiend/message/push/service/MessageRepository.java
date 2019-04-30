@@ -1,8 +1,9 @@
-package com.alvin.framework.multiend.message.push.repository;
+package com.alvin.framework.multiend.message.push.service;
 
-import com.alvin.framework.multiend.message.push.message.Message;
-import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
-import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
+import com.alvin.framework.multiend.message.push.model.Message;
+import com.alvin.framework.multiend.message.push.model.IntegratedTunnel;
+
+import java.util.Set;
 
 /**
  * datetime 2019/4/28 16:58
@@ -46,4 +47,11 @@ public interface MessageRepository {
      * @return message
      */
     Message popFromTunnelGroupQueue(String receiver, IntegratedTunnel integratedTunnel);
+
+    /**
+     * get all receivers about to receiving messages
+     *
+     * @return list of receivers
+     */
+    Set<String> listReceiversOfMessagesInQueue();
 }

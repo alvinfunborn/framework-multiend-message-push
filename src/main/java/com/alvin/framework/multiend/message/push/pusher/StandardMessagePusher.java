@@ -1,13 +1,12 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.locker.PushLocker;
-import com.alvin.framework.multiend.message.push.manager.PushManager;
-import com.alvin.framework.multiend.message.push.message.Message;
-import com.alvin.framework.multiend.message.push.repository.MessageReceiptRepository;
-import com.alvin.framework.multiend.message.push.repository.MessageRepository;
-import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
-import com.alvin.framework.multiend.message.push.tunnel.TunnelFactory;
-import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
+import com.alvin.framework.multiend.message.push.service.PushLocker;
+import com.alvin.framework.multiend.message.push.model.Message;
+import com.alvin.framework.multiend.message.push.service.MessageReceiptRepository;
+import com.alvin.framework.multiend.message.push.service.MessageRepository;
+import com.alvin.framework.multiend.message.push.service.Tunnel;
+import com.alvin.framework.multiend.message.push.model.IntegratedTunnel;
+import com.alvin.framework.multiend.message.push.service.TunnelRepository;
 
 import java.util.List;
 import java.util.Set;
@@ -28,10 +27,6 @@ public class StandardMessagePusher implements MessagePusher {
      */
     private ExecutorService executorService;
     /**
-     * push helper. need impl
-     */
-    private PushManager pushManager;
-    /**
      * message repository
      */
     private MessageRepository messageRepository;
@@ -46,46 +41,45 @@ public class StandardMessagePusher implements MessagePusher {
     /**
      * tunnel factory
      */
-    private TunnelFactory tunnelFactory;
+    private TunnelRepository tunnelRepository;
 
     StandardMessagePusher(ExecutorService executorService,
-                          PushManager pushManager,
                           MessageRepository messageRepository,
                           PushLocker pushLocker,
                           MessageReceiptRepository messageReceiptRepository,
-                          TunnelFactory tunnelFactory,
+                          TunnelRepository tunnelRepository,
                           long receiptTimeout) {
         this.executorService = executorService;
-        this.pushManager = pushManager;
         this.messageRepository = messageRepository;
         this.pushLocker = pushLocker;
         this.messageReceiptRepository = messageReceiptRepository;
-        this.tunnelFactory = tunnelFactory;
+        this.tunnelRepository = tunnelRepository;
         this.receiptTimeout = receiptTimeout;
     }
 
     @Override
     public void addToTunnelQueue(Message message, Tunnel tunnel, boolean head) {
         messageRepository.addToTunnelQueue(message, tunnel, head);
+        tunnelRepository.register(tunnel);
         triggerPush(message.getReceiver(), tunnel);
     }
 
     @Override
     public void addToTunnelGroupQueue(Message message, IntegratedTunnel integratedTunnel, boolean head) {
         messageRepository.addToIntegratedTunnelQueue(message, integratedTunnel, head);
+        tunnelRepository.register(integratedTunnel);
         triggerPush(message.getReceiver(), integratedTunnel);
     }
 
     @Override
     public void reportReceipt(String receiver, Tunnel tunnel, String messageId) {
         messageReceiptRepository.storeReceipt(receiver, messageId, tunnel);
-        pushManager.onSuccess(receiver, messageId, tunnel);
     }
 
     @Override
     public void onInit() {
-        Set<String> receivers = pushManager.listReceiversOfMessagesInQueue();
-        List<Tunnel> tunnels = tunnelFactory.listTunnels();
+        Set<String> receivers = messageRepository.listReceiversOfMessagesInQueue();
+        List<Tunnel> tunnels = tunnelRepository.findAllTunnel();
         receivers.forEach(receiver -> tunnels.forEach(tunnel -> {
             if (tunnel.connected(receiver)) {
                 onConnect(receiver, tunnel);
@@ -96,7 +90,7 @@ public class StandardMessagePusher implements MessagePusher {
     @Override
     public void onConnect(String receiver, Tunnel tunnel) {
         triggerPush(receiver, tunnel);
-        List<IntegratedTunnel> integratedTunnels = tunnelFactory.findAllIntegratedTunnelsContainTunnel(receiver, tunnel);
+        List<IntegratedTunnel> integratedTunnels = tunnelRepository.findAllIntegratedTunnelContains(tunnel);
         integratedTunnels.forEach(integratedTunnel -> triggerPush(receiver, integratedTunnel));
     }
 
@@ -169,12 +163,14 @@ public class StandardMessagePusher implements MessagePusher {
         String msg = t.getData();
         tunnel.push(receiver, msg);
         if (!solid) {
+            messageReceiptRepository.onSuccess(receiver, msgId, tunnel);
             return;
         }
         long start = System.currentTimeMillis();
         long now = start;
         while (now - start < receiptTimeout) {
             if (messageReceiptRepository.consumeReceipt(receiver, msgId, tunnel)) {
+                messageReceiptRepository.onSuccess(receiver, msgId, tunnel);
                 return;
             }
             try {

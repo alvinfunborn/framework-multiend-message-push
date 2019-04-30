@@ -1,8 +1,8 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.message.Message;
-import com.alvin.framework.multiend.message.push.tunnel.Tunnel;
-import com.alvin.framework.multiend.message.push.tunnel.IntegratedTunnel;
+import com.alvin.framework.multiend.message.push.model.Message;
+import com.alvin.framework.multiend.message.push.service.Tunnel;
+import com.alvin.framework.multiend.message.push.model.IntegratedTunnel;
 
 /**
  * datetime 2019/4/10 16:29

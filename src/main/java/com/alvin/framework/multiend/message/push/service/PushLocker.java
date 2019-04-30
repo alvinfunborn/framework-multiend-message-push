@@ -1,4 +1,4 @@
-package com.alvin.framework.multiend.message.push.locker;
+package com.alvin.framework.multiend.message.push.service;
 
 /**
  * datetime 2019/4/10 17:36

@@ -1,4 +1,4 @@
-package com.alvin.framework.multiend.message.push.manager;
+package com.alvin.framework.multiend.message.push.model;
 
 /**
  * datetime 2019/4/29 11:17

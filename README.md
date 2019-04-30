@@ -1,35 +1,36 @@
 #### 多端消息推送框架
-可靠的, 至少推送一次的, 支持有序的多端消息推送框架
+支持可靠(至少推送一次)不可靠的, 有序不有序的多端消息推送框架
 
 ##### usage
 1. 实现MessageRepository
 2. 实现MessageReceiptRepository
-3. 实现PushManager
-4. 实现MessagePushLocker, 必要时需实现未分布式锁
-5. 手动触发推送线程, 队列空或消息通道未连接自动关闭
+3. 实现TunnelRepository
+4. 实现PushLocker, 必要时需实现为分布式锁
+5. 实现Tunnel并注册到TunnelRepository
+5. 通过add,onInit,onConnect方法触发推送线程, 队列空或消息通道未连接自动关闭
 
 ###### config
 ```$xslt
 @Configuration
 public class MessagePushConfig {
-    
+
     @Autowired
-    private MessagePushLocker pushLocker;
+    private PushLocker pushLocker;
     @Autowired
     private MessageReceiptRepository messageReceiptRepository;
     @Autowired
-    private MessageRepository<String> messageRepository;
+    private MessageRepository messageRepository;
     @Autowired
-    private PushManager<String> pushManager;
+    private TunnelRepository tunnelRepository;
 
     @Bean
     public MessagePusher messagePusher() {
-        return new StandardMessagePusherBuilder<String>()
+        return new StandardMessagePusherBuilder()
                 .withExecutorService(Executors.newCachedThreadPool())
                 .withMessagePushLocker(pushLocker)
                 .withMessageReceiptRepository(messageReceiptRepository)
                 .withMessageRepository(messageRepository)
-                .withPushManager(pushManager)
+                .withTunnelRepository(tunnelRepository)
                 .withReceiptTimeout(10, TimeUnit.SECONDS).build();
     }
 }
@@ -40,19 +41,25 @@ public class MessagePushConfig {
 public class Service {
 
     @Autowired
-    private MessagePusher<Model> messagePusher;
+    private MessagePusher messagePusher;
+    @Autowired
+    private MyTunnel myTunnel;
     
     @PostConstruct
     private void init() {
         messagePusher.onInit();
     }
 
-    public void triggerPush() {
-        messagePusher.add("1", new Model("1", 1), true, true);
+    public void add() {
+        messagePusher.addToTunnelQueue(new Message(), myTunnel, false);
     }
 
     public void reportReceipt() {
-        messagePusher.reportReceipt("1", "sdf");
+        messagePusher.reportReceipt("user1", myTunnel, "msg1");
+    }
+    
+    public void onConnect(String receiver, Tunnel tunnel) {
+        messagePusher.onConnect(receiver, tunnel);
     }
 }
 ```

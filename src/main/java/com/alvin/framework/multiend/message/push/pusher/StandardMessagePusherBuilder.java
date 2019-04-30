@@ -1,7 +1,5 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.tunnel.DefaultTunnelFactory;
-
 import java.util.concurrent.Executors;
 
 /**
@@ -15,9 +13,6 @@ public class StandardMessagePusherBuilder extends MessagePusherBuilder {
         if (this.executorService == null) {
             this.executorService = Executors.newCachedThreadPool();
         }
-        if (this.pushManager == null) {
-            throw new IllegalArgumentException("pushManager must not be null");
-        }
         if (this.messageRepository == null) {
             throw new IllegalArgumentException("messageRepository must not be null");
         }
@@ -27,19 +22,15 @@ public class StandardMessagePusherBuilder extends MessagePusherBuilder {
         if (this.messageReceiptRepository == null) {
             throw new IllegalArgumentException("messageReceiptRepository must not be null");
         }
-        if (this.tunnelFactory == null) {
-            if (this.receiverIntegratedTunnelRepository == null) {
-                throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
-            }
-            this.tunnelFactory = new DefaultTunnelFactory(receiverIntegratedTunnelRepository);
+        if (this.tunnelRepository == null) {
+            throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
         }
         return new StandardMessagePusher(
                 this.executorService,
-                this.pushManager,
                 this.messageRepository,
                 this.pushLocker,
                 this.messageReceiptRepository,
-                this.tunnelFactory,
+                this.tunnelRepository,
                 this.receiptTimeout);
     }
 

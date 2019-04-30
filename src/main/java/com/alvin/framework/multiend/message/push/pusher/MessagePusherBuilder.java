@@ -1,11 +1,9 @@
 package com.alvin.framework.multiend.message.push.pusher;
 
-import com.alvin.framework.multiend.message.push.locker.PushLocker;
-import com.alvin.framework.multiend.message.push.manager.PushManager;
-import com.alvin.framework.multiend.message.push.repository.MessageReceiptRepository;
-import com.alvin.framework.multiend.message.push.repository.MessageRepository;
-import com.alvin.framework.multiend.message.push.repository.ReceiverIntegratedTunnelRepository;
-import com.alvin.framework.multiend.message.push.tunnel.TunnelFactory;
+import com.alvin.framework.multiend.message.push.service.PushLocker;
+import com.alvin.framework.multiend.message.push.service.MessageReceiptRepository;
+import com.alvin.framework.multiend.message.push.service.MessageRepository;
+import com.alvin.framework.multiend.message.push.service.TunnelRepository;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,10 +23,6 @@ public abstract class MessagePusherBuilder {
      */
     protected long receiptTimeout = 30 * 1000;
     /**
-     * push helper. need impl
-     */
-    protected PushManager pushManager;
-    /**
      * message repository
      */
     protected MessageRepository messageRepository;
@@ -41,13 +35,9 @@ public abstract class MessagePusherBuilder {
      */
     protected MessageReceiptRepository messageReceiptRepository;
     /**
-     * tunnel factory
-     */
-    protected TunnelFactory tunnelFactory;
-    /**
      * receiver tunnel repository
      */
-    protected ReceiverIntegratedTunnelRepository receiverIntegratedTunnelRepository;
+    protected TunnelRepository tunnelRepository;
 
     public abstract MessagePusher build();
 
@@ -64,14 +54,6 @@ public abstract class MessagePusherBuilder {
             throw new IllegalArgumentException("duration must be larger than zero");
         }
         this.receiptTimeout = timeunit.toMillis(duration);
-        return this;
-    }
-
-    public MessagePusherBuilder withPushManager(PushManager pushManager) {
-        if (pushManager == null) {
-            throw new IllegalArgumentException("pushManager must not be null");
-        }
-        this.pushManager = pushManager;
         return this;
     }
 
@@ -99,19 +81,11 @@ public abstract class MessagePusherBuilder {
         return this;
     }
 
-    public MessagePusherBuilder withMessagePushTunnelFactory(TunnelFactory tunnelFactory) {
-        if (tunnelFactory == null) {
-            throw new IllegalArgumentException("messagePushTunnelFactory must not be null");
-        }
-        this.tunnelFactory = tunnelFactory;
-        return this;
-    }
-
-    public MessagePusherBuilder withReceiverIntegratedTunnelRepository(ReceiverIntegratedTunnelRepository receiverIntegratedTunnelRepository) {
-        if (receiverIntegratedTunnelRepository == null) {
+    public MessagePusherBuilder withTunnelRepository(TunnelRepository tunnelRepository) {
+        if (tunnelRepository == null) {
             throw new IllegalArgumentException("receiverIntegratedTunnelRepository must not be null");
         }
-        this.receiverIntegratedTunnelRepository = receiverIntegratedTunnelRepository;
+        this.tunnelRepository = tunnelRepository;
         return this;
     }
 }
