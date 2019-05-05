@@ -1,13 +1,13 @@
 #### 多端消息推送框架
-支持可靠(至少推送一次)不可靠的, 有序不有序的多端消息推送框架
+支持可靠(至少送达一次)不可靠的, 有序不有序的多端消息推送框架
 
 ##### usage
 1. 实现MessageRepository
 2. 实现MessageReceiptRepository
-3. 实现TunnelRepository
-4. 实现PushLocker, 必要时需实现为分布式锁
-5. 实现Tunnel并注册到TunnelRepository
-5. 通过add,onInit,onConnect方法触发推送线程, 队列空或消息通道未连接自动关闭
+3. 实现TunnelFactory
+4. 实现PushLocker
+5. 实现Tunnel
+5. 通过调用add,onInit,onConnect方法触发推送线程, 队列空或消息通道未连接自动关闭
 
 ###### config
 ```$xslt
